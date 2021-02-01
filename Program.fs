@@ -12,23 +12,22 @@ let from whom =
 let main argv =
     let aymanChain = Difficulty |> Chain.Genesis 
     let contracts = 
+        [1..10] |> List.map (fun e -> 
         seq {
-            for i in 0..10 do
-                yield Some (sign System System 123)
-        } |> Seq.toList
+            for _ in 0..10 do
+                yield sign (System "sender") (System "receiver") 123
+        } |> Seq.toList )
     let rec combine (chain:Chain) contracts = 
-        match contracts, chain.Blocks with 
-        | ([], b::_) -> Ok(chain)
-        | (c::cs, b::_) -> 
-            let block = Some {Date = DateTime.Now; Datum = c; Previous=b.Hash}
-            match add chain block with
+        match contracts with 
+        | c::cs -> 
+            match transact chain c with
                    | Ok(v) -> combine v cs
                    | Error(msg) -> 
                         Error(msg)
-        | ([],_) | (_,[])  -> Error("Data missing")
-    (aymanChain, contracts) ||> combine |> 
+        | _ -> Ok(chain)
+    (aymanChain, contracts) ||> combine |> ( Process (Miner "MinerId") ) |>
     function
-    | Ok(c) -> Ok(c,validate c)
+    | Ok(c) -> Ok(c, c |> validate)
     | _ -> Error("Chain invaid")
     |> printf "%A" 
     0

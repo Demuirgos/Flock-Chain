@@ -1,9 +1,11 @@
 module Contract
     open System.Text.Json
     open System
+    type Adress = string
     type ID = 
-        | Person of string
-        | System
+        | Person of Adress
+        | Miner  of Adress
+        | System of string
 
     type Contract = {
         From    : ID
@@ -15,6 +17,6 @@ module Contract
         contract |> JsonSerializer.Serialize 
 
     let sign source destination quantity = 
-        {   From    = source;
-            To      = destination;
-            Ammount = quantity; } 
+        {   From    = source
+            To      = destination
+            Ammount = quantity } 

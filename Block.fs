@@ -13,7 +13,7 @@ module Block
     type 'T Data = {
             Date     : DateTime  
             Previous : string
-            Datum    : 'T Option
+            Datum    : 'T Option list
        }
     and 'T Block = {
             Index    : int
@@ -28,8 +28,8 @@ module Block
         let procedure (v:byte []) = System.Security.Cryptography.SHA512.Create().ComputeHash(v)
         format |> encode |> procedure |> BitConverter.ToString
 
-    let rec Create idx data diff= 
-        Mine {
+    let rec create idx data diff= 
+        mine {
             Index    = idx
             Data     = data
             Nonce    = 0
@@ -38,7 +38,7 @@ module Block
 
         
 
-    and Mine b = 
+    and mine b = 
         let {Index = _; Nonce = n; Data = d; Hash = _} = b
         let checkPrefix (hash:string) (expected:string) = 
             (hash.StartsWith(expected), hash)
@@ -54,10 +54,10 @@ module Block
             | (true , h)  -> {b with Nonce = nonce; Hash = h}
             | (false, _) ->
                 (data, nonce + 1, diff) |||> mine   
-        mine d b.Nonce
+        mine d n
     
     let genesis = 
-        let (data:Data<Contract>) = { Date = DateTime.Now; Previous = ""; Datum = None }
+        let (data:Data<Contract>) = { Date = DateTime.Now; Previous = ""; Datum = [None] }
         {
             Index    = 0
             Data     = data
