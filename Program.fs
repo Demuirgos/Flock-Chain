@@ -12,20 +12,24 @@ let from whom =
 let main argv =
     let aymanChain = Difficulty |> Chain.Genesis 
     let contracts = 
-        [1..10] |> List.map (fun e -> 
+        [1..5] |> List.map (fun e -> 
         seq {
-            for _ in 0..10 do
+            for _ in 0..2 do
                 yield sign (System "sender") (System "receiver") 123
         } |> Seq.toList )
     let rec combine (chain:Chain) contracts = 
         match contracts with 
         | c::cs -> 
             match transact chain c with
-                   | Ok(v) -> combine v cs
+                   | Ok(_) as v ->   match Process (Miner "MinerId 1") v with
+                                     | Ok(newChain) -> 
+                                        combine newChain cs
+                                     | Error(msg) -> 
+                                       Error(msg)
                    | Error(msg) -> 
                         Error(msg)
         | _ -> Ok(chain)
-    (aymanChain, contracts) ||> combine |> ( Process (Miner "MinerId") ) |>
+    (aymanChain, contracts) ||> combine |> ( Process (Miner "MinerId 1") ) |> ( Process (Miner "MinerId 2") ) |>
     function
     | Ok(c) -> Ok(c, c |> validate)
     | _ -> Error("Chain invaid")
