@@ -1,6 +1,7 @@
 module Block
     open FSharp.Core
     open System
+    open Utils
     open Contract
 
     type Difficulty = 
@@ -13,7 +14,7 @@ module Block
     type 'T Data = {
             Date     : DateTime  
             Previous : string
-            Datum    : 'T Option list
+            Datum    : 'T Option
        }
     and 'T Block = {
             Index    : int
@@ -23,22 +24,16 @@ module Block
         }
 
     let hash d corrector= 
-        let encode v = System.Text.Encoding.ASCII.GetBytes(Seq.toArray v)
-        let format = sprintf "%A-;%s-;%A-;%d" d.Date d.Previous d.Datum corrector
-        let procedure (v:byte []) = System.Security.Cryptography.SHA512.Create().ComputeHash(v)
-        format |> encode |> procedure |> BitConverter.ToString
+        hash (sprintf "%A-;%s-;%A-;%d" d.Date d.Previous d.Datum corrector)
 
     let rec create idx data diff= 
-        mine {
-            Index    = idx
+        ({  Index    = idx
             Data     = data
             Nonce    = 0
             Hash     = hash data 0 
-        } diff
+        }, diff) ||> mine |> wrap
 
-        
-
-    and mine b = 
+    and mine b= 
         let {Index = _; Nonce = n; Data = d; Hash = _} = b
         let checkPrefix (hash:string) (expected:string) = 
             (hash.StartsWith(expected), hash)
@@ -54,10 +49,17 @@ module Block
             | (true , h)  -> {b with Nonce = nonce; Hash = h}
             | (false, _) ->
                 (data, nonce + 1, diff) |||> mine   
-        mine d n
-    
+        mine d n 
+
+    and wrap b = 
+        let hashWrap d h = 
+            Utils.hash (sprintf "%A-:%s" d h)
+        { 
+            b with Hash = (hashWrap b.Data b.Hash)
+        }
+
     let genesis = 
-        let (data:Data<Contract>) = { Date = DateTime.Now; Previous = ""; Datum = [None] }
+        let (data:Data<Contracts>) = { Date = DateTime.Now; Previous = ""; Datum = None }
         {
             Index    = 0
             Data     = data

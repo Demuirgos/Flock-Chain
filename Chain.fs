@@ -9,7 +9,7 @@ module Chain
         {
             Pending     : Contract list
             Difficulty  : Difficulty
-            Blocks      : Block<Contract> list
+            Blocks      : Block<Contracts> list
         }
         member this.Reward =  1 
         static member Genesis difficulty = 
@@ -40,9 +40,9 @@ module Chain
                                             let block = ((List.length chain.Blocks), {
                                                             Date     = DateTime.Now ;
                                                             Previous = chain.Blocks.Head.Hash;
-                                                            Datum     = chain.Pending |> List.map (fun x -> Some(x)) ;
+                                                            Datum    = Some chain.Pending;
                                                         },chain.Difficulty)
-                                                        |||> Block.create 
+                                                        |||> create 
                                             block::chain.Blocks
                                         Pending = [pay miner chain.Reward] ;
                         } 
@@ -55,9 +55,9 @@ module Chain
         | Some(v) -> match chain.Blocks with 
                      | c::_ -> 
                         let block = (c.Index + 1, v, chain.Difficulty) |||> Block.create
-                        Ok({ chain with
+                        Ok { chain with
                                         Blocks = block::chain.Blocks
-                        })
+                        }
                      | _ -> Error("Chain has no genesis")
 
     let validate (chain:Chain)=

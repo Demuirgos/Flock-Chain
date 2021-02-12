@@ -12,6 +12,7 @@ module Contract
         To      : ID
         Ammount : int
     }
+    and Contracts = Contract list
 
     let serialize contract = 
         contract |> JsonSerializer.Serialize 
